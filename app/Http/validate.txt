@@ -1,0 +1,51 @@
+To validate a password that must include at least 8 characters, with at least one uppercase letter, one lowercase letter, one number, and one symbol, you can use a combination of regular expressions and Laravel's validation rules. Here's how you can implement it:
+
+1. **Add Custom Validation Rule**:
+
+   Define a custom validation rule using a regular expression that enforces the required password complexity.
+
+   First, create a custom validation rule. You can do this by extending Laravel's `Validator` facade. Add this code in your `App\Providers\AppServiceProvider` `boot` method:
+
+   ```php
+   use Illuminate\Support\Facades\Validator;
+
+   public function boot()
+   {
+       Validator::extend('password_complexity', function ($attribute, $value, $parameters, $validator) {
+           return preg_match('/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/', $value);
+       });
+   }
+   ```
+
+   This custom rule checks if the password meets the specified complexity requirements.
+
+2. **Use Custom Validation Rule**:
+
+   Apply the custom validation rule to the `new_password` field in your `update` method:
+
+   ```php
+   public function update(Request $request)
+   {
+       $user = Auth::user();
+
+       // Validate the request data
+       $request->validate([
+           'new_password' => 'required|min:8|password_complexity',
+           // Other validation rules
+       ]);
+
+       // Update the user's profile information
+       $user->password = Hash::make($request->input('new_password'));
+       // Update other fields as needed
+
+       // Save the updated user information
+       $user->save();
+
+       // Redirect back with success message
+       return redirect()->back()->with('success', 'Profile updated successfully!');
+   }
+   ```
+
+   Ensure that you apply the `password_complexity` rule to the `new_password` field.
+
+With these changes, your form submission will now be validated to ensure that the new password meets the specified complexity requirements. Adjust the regular expression pattern if needed to fit your specific requirements.
